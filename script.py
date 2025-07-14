@@ -1,9 +1,13 @@
 from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 import xgboost as xgb
 import pandas as pd
 import uvicorn
 import pickle
+from pathlib import Path
 
 model = xgb.XGBClassifier()
 model.load_model("personality_model.json")
@@ -19,6 +23,14 @@ feature_order = preprocess["feature_order"]
 binary_map = {'Yes': 1, 'No': 0}
 
 app = FastAPI()
+
+# Mount the static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    with open("static/index.html") as f:
+        return HTMLResponse(content=f.read())
 
 class InputData(BaseModel):
     Time_spent_Alone: float
